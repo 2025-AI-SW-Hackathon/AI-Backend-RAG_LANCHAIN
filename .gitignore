@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.log
+
+# Virtual environment
+venv/
+env/
+
+# Environment variables
+.env
+
+# VSCode / JetBrains IDE 설정
+.vscode/
+.idea/
+
+# MacOS
+.DS_Store
+
+# PDF, 텍스트 데이터 등 민감하거나 임시 파일
+data/
+pdf_input/
+
+# Jupyter Notebook 체크포인트 (해당 시)
+.ipynb_checkpoints/
