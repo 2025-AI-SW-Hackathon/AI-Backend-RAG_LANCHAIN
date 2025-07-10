@@ -5,13 +5,12 @@ import os
 from typing import Annotated, List
 from typing_extensions import TypedDict
 from pydantic import BaseModel, Field
-
 from langchain_core.output_parsers import StrOutputParser
 from langchain_openai import ChatOpenAI
 from langchain_teddynote.models import get_model_name, LLMs
 from langchain_teddynote.tools.tavily import TavilySearch
 from langgraph.graph import END, START, StateGraph
-
+import re
 import myPDFparser
 import myUpstageRAG
 import prompt
@@ -171,19 +170,40 @@ def receive_text_question():
 
     try:
         voice, answer, answer_state = run_CRAG_pipeline(global_rag, question)
-        annotation = {"id": str(uuid4()), "text": question, "answer": answer}
+
+        # 맨 마지막 줄 기준으로 페이지 번호 추출
+        lines = answer.strip().split("\n")
+        last_line = lines[-1].strip()
+
+        page_number = None
+        match = re.match(r"^페이지번호\s*(\d+)$", last_line)
+        if match:
+            page_number = int(match.group(1))
+            lines = lines[:-1]  # 마지막 줄 제거
+
+        refined_answer = "\n".join(lines)
+
+        annotation = {
+            "id": str(uuid4()),
+            "text": question,
+            "answer": refined_answer
+        }
         annotations.append(annotation)
+
         print("=================================")
         print("답변 생성 완료!")
         print("=================================")
-        print("voice 내용: ",voice )
-        print("답변 내용: ",answer)
+        print("voice 내용: ", voice)
+        print("답변 내용: ", refined_answer)
+
         return jsonify({
-            "voice" : voice,
-            "refinedText": answer,
-            "refinedMarkdown": f"## 답변\n- {answer}",
-            "answerState": answer_state
+            "voice": voice,
+            "refinedText": refined_answer,
+            "refinedMarkdown": f"## 답변\n- {refined_answer}",
+            "answerState": answer_state,
+            "pageNumber": page_number
         })
+
     except Exception as e:
         import traceback
         traceback.print_exc()
